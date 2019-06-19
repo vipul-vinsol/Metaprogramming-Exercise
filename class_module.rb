@@ -13,23 +13,40 @@ module ClassModule
   end
 
   def before_filter(*args, only: nil, except: nil)
-    if args.all? { |ele| private_method_defined?(ele) }
-      return if only && insert_filters_in_store(only, :before, args)
-      filter_on_methods = filter_methods 
-      except && filter_on_methods -= except
-      insert_filters_in_store(filter_on_methods, :before, args)
-    end
+    validate_and_apply_filters(args, only, except, :before)
   end
 
   def after_filter(*args, only: nil, except: nil)
-    if args.all? { |ele| private_method_defined?(ele) }
-      return if only && insert_filters_in_store(only, :after, args)
-      filter_on_methods = filter_methods
-      except && filter_on_methods -= except
-      insert_filters_in_store(filter_on_methods, :after, args)
+#     if args.all? { |ele| private_method_defined?(ele) }
+#       return if only && insert_filters_in_store(only, :after, args)
+#       filter_on_methods = filter_methods
+#       except && filter_on_methods -= except
+#       insert_filters_in_store(filter_on_methods, :after, args)
+#     end
+    validate_and_apply_filters(args, only, except, :before)
+  end
+  
+  private def validate_and_apply_filters(filter, only_on, except_on, before_after)
+    if filter.all? { |ele| private_method_defined?(ele) }
+      apply_filters_to_methods(filter, only_on, except_on, before_after)
     end
   end
+  
+  private def apply_filters_to_methods(filters, only_on, except_on, before_after)
+    return if only_handler(filters, only_on, before_after) 
+    except_handler(filters, except_on, before_after)
+  end
+  
+  private def only_handler(filters, only_on, before_after)
+    only_on && insert_filters_in_store(only_on, before_after, filters)
+  end
 
+  private def except_handler(filters, except_on, before_after)
+    applied_on = filters_applied_on 
+    except && applied_on -= except
+    insert_filters_in_store(applied_on, before_after, filters)
+  end
+  
   private def get_filter_store
     class_variable_get('@@__filter_store')
   end
@@ -41,7 +58,7 @@ module ClassModule
     end
   end
 
-  private def filter_methods
+  private def filters_applied_on
     m = class_variable_get('@@__action_methods')
     return m if m.length > 0
     public_instance_methods(false)
