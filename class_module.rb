@@ -17,22 +17,16 @@ module ClassModule
   end
 
   def after_filter(*args, only: nil, except: nil)
-#     if args.all? { |ele| private_method_defined?(ele) }
-#       return if only && insert_filters_in_store(only, :after, args)
-#       filter_on_methods = filter_methods
-#       except && filter_on_methods -= except
-#       insert_filters_in_store(filter_on_methods, :after, args)
-#     end
-    validate_and_apply_filters(args, only, except, :before)
+    validate_and_apply_filters(args, only, except, :after)
   end
   
   private def validate_and_apply_filters(filter, only_on, except_on, before_after)
     if filter.all? { |ele| private_method_defined?(ele) }
-      apply_filters_to_methods(filter, only_on, except_on, before_after)
+      apply_filters_on_methods(filter, only_on, except_on, before_after)
     end
   end
   
-  private def apply_filters_to_methods(filters, only_on, except_on, before_after)
+  private def apply_filters_on_methods(filters, only_on, except_on, before_after)
     return if only_handler(filters, only_on, before_after) 
     except_handler(filters, except_on, before_after)
   end
@@ -43,7 +37,7 @@ module ClassModule
 
   private def except_handler(filters, except_on, before_after)
     applied_on = filters_applied_on 
-    except && applied_on -= except
+    except_on && applied_on -= except_on
     insert_filters_in_store(applied_on, before_after, filters)
   end
   
